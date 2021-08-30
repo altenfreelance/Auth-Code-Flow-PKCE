@@ -29,12 +29,11 @@ function App() {
           xhr.onload = function() {
               var response = xhr.response;
 
-              console.log(response)
-
               if (xhr.status === 200) {
                   setAuthenticated(true)
                   const jwt_decoded= jwt_decode(response.access_token)
-                  setMsg("Access Token: "+ JSON.stringify(jwt_decoded))
+                  console.log(jwt_decoded)
+                  setMsg(JSON.stringify(jwt_decoded))
 
               }
               else {
