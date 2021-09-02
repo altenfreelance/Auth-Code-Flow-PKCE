@@ -2,7 +2,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 import { Container, Row, Button } from 'react-bootstrap'
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import jwt_decode from "jwt-decode";
 import { CopyBlock, dracula } from "react-code-blocks";
 import useAuthCodeFlowPKCE from './hooks/useAuthCodeFlowPKCE';
@@ -18,20 +18,27 @@ const apiProtectedEndpoint = process.env.REACT_APP_PROTECTED_ROUTE
 function App() {
 
   const [jwtMsg, setJwtMsg] = useState(null)
+  const [idMsg, setIdMsg] = useState(null)
   const [pocJson, setPocJson] = useState(null)
   const [tokenIsExpired, setTokenIsExpired] = useState(null)
 
-  const [jwt, jwtExpiration, refreshJwtAndDoCallback] = useAuthCodeFlowPKCE(clientId, audience, authorizeEndpoint, tokenEndpoint)
-  const jwtRef = useRef(null)
+  const [jwt, jwtExpiration, refreshJwt, idToken] = useAuthCodeFlowPKCE(clientId, audience, authorizeEndpoint, tokenEndpoint)
 
   useEffect(() => {
     if (jwt) {
-      jwtRef.current = jwt
       const decodedJwt = jwt_decode(jwt)
 
       setJwtMsg(JSON.stringify(decodedJwt).replace(/,/g, `,\n    `).replace(/{/g, `{\n    `).replace(/}/g, `\n}`))
     }
   }, [jwt])
+
+  useEffect(() => {
+    if (idToken) {
+      const decodedIdToken = jwt_decode(idToken)
+
+      setIdMsg(JSON.stringify(decodedIdToken).replace(/,/g, `,\n    `).replace(/{/g, `{\n    `).replace(/}/g, `\n}`))
+    }
+  }, [idToken])
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -44,7 +51,12 @@ function App() {
     return jwtExpiration < Date.now()
   }
 
-  function _doFetchProtectedData(token) {
+  async function fetchProtectedData() {
+
+    const token = isTokenExpired() ? (await refreshJwt()).access_token : jwt
+    console.log(token)
+
+    setPocJson(null)
     fetch(apiProtectedEndpoint, {
       method: "GET",
       withCredentials: true,
@@ -60,19 +72,6 @@ function App() {
         console.log(err)
         alert("Something went wrong")
       })
-  }
-
-  function fetchProtectedData(token) {
-    setPocJson(null)
-
-    if (isTokenExpired()) {
-      refreshJwtAndDoCallback(_doFetchProtectedData)
-    }
-    else {
-      _doFetchProtectedData(token)
-    }
-
-
   }
 
   function getPrettyDate(date) {
@@ -94,26 +93,29 @@ function App() {
           />
           <p>Expiration Date: <b>{getPrettyDate(jwtExpiration)}</b></p>
           {tokenIsExpired !== null && <p>Token is Expired: <b>{tokenIsExpired.toString()}</b></p>}
-          {tokenIsExpired &&
-            <Row>
-              <Button variant="success" onClick={() => { refreshJwtAndDoCallback(() => console.log("nothing")) }}>Refresh token</Button>
-              <br />
-              <hr />
-            </Row>
+        </Row>
+      }
 
-          }
-        </Row>
-      }
-      {jwt && tokenIsExpired &&
+      {idMsg &&
         <Row>
-          <Button variant="warning" onClick={() => fetchProtectedData(jwt)}>Hit Protected End Point And Refresh Token</Button>
-          <br />
-          <hr />
+          <h1>ID Token</h1>
+          <CopyBlock
+            text={idMsg}
+            language={"json"}
+            showLineNumbers
+            theme={dracula}
+            codeBlock
+          />
         </Row>
       }
+
       {jwt &&
         <Row>
-          <Button variant="warning" onClick={() => _doFetchProtectedData(jwt)}>Hit Protected End Point</Button>
+          <Button
+            variant={isTokenExpired() ? "success" : "warning"}
+            onClick={() => fetchProtectedData()}>
+            {!isTokenExpired() ? "Hit Protected End Point" : "Hit Protected End Point and Refresh Token"}
+          </Button>
           <br />
           <hr />
         </Row>
