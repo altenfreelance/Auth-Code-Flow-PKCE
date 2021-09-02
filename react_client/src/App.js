@@ -20,32 +20,24 @@ function App() {
   const [jwtMsg, setJwtMsg] = useState(null)
   const [idMsg, setIdMsg] = useState(null)
   const [pocJson, setPocJson] = useState(null)
-  const [tokenIsExpired, setTokenIsExpired] = useState(null)
 
   const [jwt, jwtExpiration, refreshJwt, idToken] = useAuthCodeFlowPKCE(clientId, audience, authorizeEndpoint, tokenEndpoint)
 
+  // Sotre decoded jwt when we get it
   useEffect(() => {
     if (jwt) {
       const decodedJwt = jwt_decode(jwt)
-
       setJwtMsg(JSON.stringify(decodedJwt).replace(/,/g, `,\n    `).replace(/{/g, `{\n    `).replace(/}/g, `\n}`))
     }
   }, [jwt])
 
+  // store decoded idToken when we get it
   useEffect(() => {
     if (idToken) {
       const decodedIdToken = jwt_decode(idToken)
-
       setIdMsg(JSON.stringify(decodedIdToken).replace(/,/g, `,\n    `).replace(/{/g, `{\n    `).replace(/}/g, `\n}`))
     }
   }, [idToken])
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTokenIsExpired(isTokenExpired())
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [jwtExpiration]);
 
   function isTokenExpired() {
     return jwtExpiration < Date.now()
@@ -53,8 +45,16 @@ function App() {
 
   async function fetchProtectedData() {
 
-    const token = isTokenExpired() ? (await refreshJwt()).access_token : jwt
-    console.log(token)
+    // Refresh token if needed
+    const isExpired = isTokenExpired()
+    if (isExpired) {
+      console.log("We refreshed your tokens before making api call since the jwt was expired...")
+    }
+    else {
+      console.log("Token is still valid, using it")
+
+    }
+    const token = isExpired ? (await refreshJwt()).access_token : jwt
 
     setPocJson(null)
     fetch(apiProtectedEndpoint, {
@@ -92,7 +92,6 @@ function App() {
             codeBlock
           />
           <p>Expiration Date: <b>{getPrettyDate(jwtExpiration)}</b></p>
-          {tokenIsExpired !== null && <p>Token is Expired: <b>{tokenIsExpired.toString()}</b></p>}
         </Row>
       }
 
@@ -112,12 +111,12 @@ function App() {
       {jwt &&
         <Row>
           <Button
-            variant={isTokenExpired() ? "success" : "warning"}
+            variant={"warning"}
             onClick={() => fetchProtectedData()}>
-            {!isTokenExpired() ? "Hit Protected End Point" : "Hit Protected End Point and Refresh Token"}
+            Hit Protected End Point
           </Button>
+          <p>(This will refresh your tokens if needed also; Check the console log to see if it was refreshed)</p>
           <br />
-          <hr />
         </Row>
       }
       {pocJson &&
