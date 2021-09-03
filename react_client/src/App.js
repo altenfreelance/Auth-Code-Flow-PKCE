@@ -23,7 +23,7 @@ function App() {
 
   const [jwt, jwtExpiration, refreshTokens, idToken] = useAuthCodeFlowPKCE(clientId, audience, authorizeEndpoint, tokenEndpoint)
 
-  // Sotre decoded jwt when we get it
+  // Store decoded jwt when we get it
   useEffect(() => {
     if (jwt) {
       const decodedJwt = jwt_decode(jwt)
@@ -31,7 +31,7 @@ function App() {
     }
   }, [jwt])
 
-  // store decoded idToken when we get it
+  // Store decoded idToken when we get it
   useEffect(() => {
     if (idToken) {
       const decodedIdToken = jwt_decode(idToken)
