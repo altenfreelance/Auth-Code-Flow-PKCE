@@ -21,7 +21,7 @@ function App() {
   const [idMsg, setIdMsg] = useState(null)
   const [pocJson, setPocJson] = useState(null)
 
-  const [jwt, jwtExpiration, refreshJwt, idToken] = useAuthCodeFlowPKCE(clientId, audience, authorizeEndpoint, tokenEndpoint)
+  const [jwt, jwtExpiration, refreshTokens, idToken] = useAuthCodeFlowPKCE(clientId, audience, authorizeEndpoint, tokenEndpoint)
 
   // Sotre decoded jwt when we get it
   useEffect(() => {
@@ -54,7 +54,7 @@ function App() {
       console.log("Token is still valid, using it")
 
     }
-    const token = isExpired ? (await refreshJwt()).access_token : jwt
+    const token = isExpired ? (await refreshTokens()).access_token : jwt
 
     setPocJson(null)
     fetch(apiProtectedEndpoint, {

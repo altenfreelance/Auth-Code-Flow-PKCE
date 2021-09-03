@@ -101,7 +101,7 @@ const useAuthCodeFlowPKCE = (clientId, audience, authorizeEndpoint, tokenEndpoin
     return expDate
   }
 
-  async function refreshJwt() {
+  async function refreshTokens() {
 
     var refreshOptions = {
       method: 'POST',
@@ -113,9 +113,10 @@ const useAuthCodeFlowPKCE = (clientId, audience, authorizeEndpoint, tokenEndpoin
     const tokens = axios.request(refreshOptions)
       .then(function (response) {
 
-        const { access_token, refresh_token } = response.data
+        const { access_token, refresh_token, id_token } = response.data
 
         setJwt(access_token)
+        setIdToken(id_token)
         setRefreshToken(refresh_token)
         setJwtExpiration(getJwtExpiration(access_token))
 
@@ -128,7 +129,7 @@ const useAuthCodeFlowPKCE = (clientId, audience, authorizeEndpoint, tokenEndpoin
     return tokens
   }
 
-  return [jwt, jwtExpiration, refreshJwt, idToken]
+  return [jwt, jwtExpiration, refreshTokens, idToken]
 
 }
 
