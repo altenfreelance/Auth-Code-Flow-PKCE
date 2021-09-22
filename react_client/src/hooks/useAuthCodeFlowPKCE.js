@@ -28,7 +28,7 @@ const useAuthCodeFlowPKCE = (clientId, audience, authorizeEndpoint, tokenEndpoin
           audience: audience,
           scope: "openid profile offline_access" //To enable refresh token
         });
-        window.location = authorizeEndpoint + "/?" + args;
+        window.location = authorizeEndpoint + "?" + args;
       });
     }
 
@@ -44,7 +44,6 @@ const useAuthCodeFlowPKCE = (clientId, audience, authorizeEndpoint, tokenEndpoin
       var code = args.get("code");
 
       if (code) {
-
         var accessTokenOptions = {
           method: 'POST',
           url: tokenEndpoint,
@@ -54,7 +53,6 @@ const useAuthCodeFlowPKCE = (clientId, audience, authorizeEndpoint, tokenEndpoin
 
         axios.request(accessTokenOptions)
           .then(function (response) {
-
             const { access_token, refresh_token, id_token } = response.data
 
             setJwt(access_token)
